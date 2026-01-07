@@ -1,65 +1,222 @@
-import Image from "next/image";
+"use client";
+
+import { useMemo, useState, useEffect } from "react";
 
 export default function Home() {
+  const [title, setTitle] = useState("");
+  const [filter, setFilter] = useState("all"); // all | active | done
+  const [editingId, setEditingId] = useState(null);
+  const [editingTitle, setEditingTitle] = useState("");
+
+  // Loading from localStorage on startup
+  const [tasks, setTasks] = useState(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const stored = localStorage.getItem("mini-ops-tasks");
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // Save tasks to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem("mini-ops-tasks", JSON.stringify(tasks));
+  }, [tasks]);
+
+  const filteredTasks = useMemo(() => {
+    if (filter === "active") return tasks.filter((t) => !t.done);
+    if (filter === "done") return tasks.filter((t) => t.done);
+    return tasks;
+  }, [tasks, filter]);
+
+  // Add a new task with the current title
+  function addTask(e) {
+    e.preventDefault();
+    const trimmed = title.trim();
+    if (!trimmed) return;
+
+    const newTask = {
+      id:
+        typeof crypto !== "undefined" && crypto.randomUUID
+          ? crypto.randomUUID()
+          : String(Date.now()),
+      title: trimmed,
+      done: false,
+    };
+
+    setTasks((prev) => [newTask, ...prev]);
+    setTitle("");
+  }
+
+  // Toggle the 'done' status of a task by its ID
+  function toggleTask(id) {
+    setTasks((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t))
+    );
+  }
+
+  // Delete a task by its ID
+  function deleteTask(id) {
+    setTasks((prev) => prev.filter((t) => t.id !== id));
+  }
+
+  // Start editing a task
+  function startEdit(task) {
+    setEditingId(task.id);
+    setEditingTitle(task.title);
+  }
+
+  // Save the edited task title
+  function saveEdit(id) {
+    const trimmed = editingTitle.trim();
+    if (!trimmed) return;
+
+    setTasks((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, title: trimmed } : t))
+    );
+    setEditingId(null);
+    setEditingTitle("");
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setEditingTitle("");
+  }
+
+  // Render the main dashboard UI
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.js file.
+    <main className="min-h-screen bg-slate-50">
+      <div className="mx-auto max-w-2xl px-4 py-10">
+        <header className="mb-6">
+          <h1 className="text-2xl font-semibold text-slate-900">
+            Mini Ops Dashboard
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="mt-1 text-sm text-slate-600">
+            A lightweight task tracker ( CRUD + filtering + localStorage ).
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+        </header>
+
+        <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+          <form onSubmit={addTask} className="flex gap-2">
+            <input
+              className="flex-1 rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-slate-400"
+              placeholder="Add a task…"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+            <button
+              className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+              type="submit"
+            >
+              Add
+            </button>
+          </form>
+
+          <div className="mt-4 flex gap-2 text-sm">
+            {[
+              ["all", "All"],
+              ["active", "Active"],
+              ["done", "Done"],
+            ].map(([key, label]) => (
+              <button
+                key={key}
+                className={`rounded-xl px-3 py-1 ring-1 ring-slate-200 ${
+                  filter === key ? "bg-slate-900 text-white" : "bg-white"
+                }`}
+                onClick={() => setFilter(key)}
+                type="button"
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          <ul className="mt-4 space-y-2">
+            {filteredTasks.length === 0 ? (
+              <li className="rounded-xl bg-slate-50 p-3 text-sm text-slate-600">
+                No tasks yet.
+              </li>
+            ) : (
+              filteredTasks.map((t) => (
+                <li
+                  key={t.id}
+                  className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3"
+                >
+                  <label className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={t.done}
+                      onChange={() => toggleTask(t.id)}
+                      className="h-4 w-4"
+                    />
+                    {editingId === t.id ? (
+                      <input
+                        className="rounded border border-slate-300 px-2 py-1 text-sm"
+                        value={editingTitle}
+                        onChange={(e) => setEditingTitle(e.target.value)}
+                        autoFocus
+                      />
+                    ) : (
+                      <span
+                        className={`text-sm ${
+                          t.done
+                            ? "text-slate-400 line-through"
+                            : "text-slate-900"
+                        }`}
+                      >
+                        {t.title}
+                      </span>
+                    )}
+                  </label>
+
+                  <div className="flex items-center gap-2">
+                    {editingId === t.id ? (
+                      <>
+                        <button
+                          onClick={() => saveEdit(t.id)}
+                          className="rounded px-2 py-1 text-xs text-white bg-slate-900"
+                          type="button"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={cancelEdit}
+                          className="rounded px-2 py-1 text-xs text-slate-600 ring-1 ring-slate-200"
+                          type="button"
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => startEdit(t)}
+                          className="rounded px-2 py-1 text-xs text-slate-600 hover:bg-slate-50"
+                          type="button"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => deleteTask(t.id)}
+                          className="rounded px-2 py-1 text-xs text-slate-600 hover:bg-slate-50"
+                          type="button"
+                        >
+                          Delete
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </li>
+              ))
+            )}
+          </ul>
+        </section>
+
+        <footer className="mt-6 text-xs text-slate-500">
+          Built as a personal project to practice shipping internal tools.
+        </footer>
+      </div>
+    </main>
   );
 }
