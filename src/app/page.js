@@ -106,7 +106,7 @@ export default function Home() {
               onChange={(e) => setTitle(e.target.value)}
             />
             <button
-              className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+              className="rounded-xl bg-indigo-900 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-800"
               type="submit"
             >
               Add
@@ -122,7 +122,7 @@ export default function Home() {
               <button
                 key={key}
                 className={`rounded-xl px-3 py-1 ring-1 ring-slate-200 ${
-                  filter === key ? "bg-slate-900 text-white" : "bg-white"
+                  filter === key ? "bg-indigo-900 text-white" : "bg-white"
                 }`}
                 onClick={() => setFilter(key)}
                 type="button"
