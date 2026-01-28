@@ -139,7 +139,9 @@ export default function Home() {
               <button
                 key={key}
                 className={`rounded-xl px-3 py-1 ring-1 ring-slate-200 ${
-                  filter === key ? "bg-indigo-900 text-white" : "bg-white"
+                  filter === key
+                    ? "bg-indigo-900 text-white"
+                    : "bg-white text-slate-900"
                 }`}
                 onClick={() => setFilter(key)}
                 type="button"
