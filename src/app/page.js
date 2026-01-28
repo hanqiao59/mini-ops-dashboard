@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState, useEffect } from "react";
 
 export default function Home() {
@@ -9,8 +10,11 @@ export default function Home() {
   const [editingTitle, setEditingTitle] = useState("");
 
   // Loading from localStorage on startup
+  //using lazy initial state to avoid SSR issues
   const [tasks, setTasks] = useState(() => {
+    // prevent SSR issues
     if (typeof window === "undefined") return [];
+    // try to parse tasks from localStorage， prevents coruppted data
     try {
       const stored = localStorage.getItem("mini-ops-tasks");
       return stored ? JSON.parse(stored) : [];
@@ -24,6 +28,7 @@ export default function Home() {
     localStorage.setItem("mini-ops-tasks", JSON.stringify(tasks));
   }, [tasks]);
 
+  // Filter tasks based on the current filter state
   const filteredTasks = useMemo(() => {
     if (filter === "active") return tasks.filter((t) => !t.done);
     if (filter === "done") return tasks.filter((t) => t.done);
@@ -32,12 +37,16 @@ export default function Home() {
 
   // Add a new task with the current title
   function addTask(e) {
+    //prevent the default form submission so the page doesn’t reload.
     e.preventDefault();
+
     const trimmed = title.trim();
     if (!trimmed) return;
 
+    // Create a new task object
     const newTask = {
       id:
+        // Use crypto.randomUUID() if available, otherwise fallback to timestamp
         typeof crypto !== "undefined" && crypto.randomUUID
           ? crypto.randomUUID()
           : String(Date.now()),
@@ -45,14 +54,15 @@ export default function Home() {
       done: false,
     };
 
+    // Add the new task to the list
     setTasks((prev) => [newTask, ...prev]);
-    setTitle("");
+    setTitle(""); //empty the input field
   }
 
   // Toggle the 'done' status of a task by its ID
   function toggleTask(id) {
     setTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t))
+      prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t)),
     );
   }
 
@@ -72,13 +82,15 @@ export default function Home() {
     const trimmed = editingTitle.trim();
     if (!trimmed) return;
 
+    // Update the task title
     setTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, title: trimmed } : t))
+      prev.map((t) => (t.id === id ? { ...t, title: trimmed } : t)),
     );
     setEditingId(null);
     setEditingTitle("");
   }
 
+  // Cancel editing
   function cancelEdit() {
     setEditingId(null);
     setEditingTitle("");
@@ -95,6 +107,11 @@ export default function Home() {
           <p className="mt-1 text-sm text-slate-600">
             A lightweight task tracker ( CRUD + filtering + localStorage ).
           </p>
+          <div className="mt-2">
+            <Link href="/about" className="text-sm text-slate-600 underline">
+              About
+            </Link>
+          </div>
         </header>
 
         <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
