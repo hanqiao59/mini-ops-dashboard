@@ -9,19 +9,12 @@ export default function Home() {
   const [editingId, setEditingId] = useState(null);
   const [editingTitle, setEditingTitle] = useState("");
 
-  // Loading from localStorage on startup
-  //using lazy initial state to avoid SSR issues
-  const [tasks, setTasks] = useState(() => {
-    // prevent SSR issues
-    if (typeof window === "undefined") return [];
-    // try to parse tasks from localStorage， prevents coruppted data
-    try {
-      const stored = localStorage.getItem("mini-ops-tasks");
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [tasks, setTasks] = useState([]);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("mini-ops-tasks");
+    if (stored) setTasks(JSON.parse(stored));
+  }, []);
 
   // Save tasks to localStorage whenever they change
   useEffect(() => {
